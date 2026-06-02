@@ -8,6 +8,11 @@ on:
   workflow_dispatch:
     # 允許手動在 GitHub Actions 頁面觸發（方便測試）
 
+# 防止多個執行同時 push 造成衝突
+concurrency:
+  group: paper-monitor-push
+  cancel-in-progress: false
+
 jobs:
   monitor:
     runs-on: ubuntu-latest
@@ -43,6 +48,9 @@ jobs:
           git add state.json
           git diff --staged --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update state.json [skip ci]"
-          # 先把遠端的新 commit 拉下來再 push，避免 non-fast-forward 被拒
-          git pull --rebase origin master
-          git push origin HEAD:master
+          # push 前先 rebase；若遠端又被更新就重試，最多 5 次
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin master && git push origin HEAD:master && break
+            echo "push 第 $i 次失敗，重試中..."
+            sleep 3
+          done
