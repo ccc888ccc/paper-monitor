@@ -77,7 +77,7 @@ def main():
         return
 
     # 5. LLM 判讀
-    papers_with_summary = summarize_papers(new_papers, config)
+    papers_with_summary = summarize_papers(new_papers, config, delay_seconds=0.5)
 
     # 6. Telegram 推送
     notify_papers(papers_with_summary, config)
