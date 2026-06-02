@@ -37,7 +37,7 @@ def fetch_arxiv(categories: List[str], max_results: int = 50) -> List[Dict]:
     categories: 如 ["math.OC", "cs.LG"]
     """
     papers = []
-    search_query = " OR ".join(f"cat:{c}" for c in categories)
+    search_query = "+OR+".join(f"cat:{c}" for c in categories)
     url = (
         "https://export.arxiv.org/api/query"
         f"?search_query={search_query}"
