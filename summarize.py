@@ -1,9 +1,8 @@
 """
 summarize.py — LLM 判讀
-呼叫 Google Gemini API，對每篇論文的 title + abstract 產生快速判讀。
-API key 由環境變數 GEMINI_API_KEY 傳入。
-免費方案：gemini-1.5-flash 每天 1500 次請求，對本 pipeline 完全夠用。
-取得 API key：https://aistudio.google.com/app/apikey
+呼叫 Claude API（Anthropic），對每篇論文的 title + abstract 產生快速判讀。
+API key 由環境變數 ANTHROPIC_API_KEY 傳入。
+取得 API key：https://console.anthropic.com
 """
 
 import os
@@ -11,24 +10,23 @@ import logging
 import time
 from typing import Dict
 
-import requests
+import anthropic
 
 logger = logging.getLogger(__name__)
 
 _MIN_ABSTRACT_LEN = 50
-_GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 
 def summarize_paper(paper: Dict, config: Dict) -> str:
     """
-    對單篇論文呼叫 Gemini API，回傳判讀文字。
+    對單篇論文呼叫 Claude API，回傳判讀文字。
     paper:  包含 title / abstract 的 dict
     config: config.yaml 中的 llm 區塊
     回傳：判讀字串，或錯誤訊息字串。
     """
-    api_key = os.environ.get("GEMINI_API_KEY", "")
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
-        return "⚠️ 未設定 GEMINI_API_KEY，跳過 LLM 判讀。"
+        return "⚠️ 未設定 ANTHROPIC_API_KEY，跳過 LLM 判讀。"
 
     title = paper.get("title", "(無標題)")
     abstract = paper.get("abstract", "").strip()
@@ -39,24 +37,22 @@ def summarize_paper(paper: Dict, config: Dict) -> str:
     prompt_template = config.get("prompt", "請判讀以下論文：\n標題：{title}\n摘要：{abstract}")
     prompt = prompt_template.format(title=title, abstract=abstract)
 
-    model = config.get("model", "gemini-1.5-flash")
-    url = _GEMINI_URL.format(model=model) + f"?key={api_key}"
-
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"maxOutputTokens": config.get("max_tokens", 400)},
-    }
+    model = config.get("model", "claude-haiku-4-5-20251001")
+    max_tokens = config.get("max_tokens", 400)
 
     try:
-        resp = requests.post(url, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        result = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        result = message.content[0].text.strip()
         logger.info(f"LLM summarized: {title[:50]}...")
         return result
-    except requests.HTTPError as e:
-        logger.error(f"Gemini API HTTP error: {e.response.status_code} {e.response.text}")
-        return f"⚠️ LLM API 錯誤（{e.response.status_code}），跳過判讀。"
+    except anthropic.APIStatusError as e:
+        logger.error(f"Anthropic API error: {e.status_code} {e.message}")
+        return f"⚠️ LLM API 錯誤（{e.status_code}），跳過判讀。"
     except Exception as e:
         logger.error(f"LLM error: {e}")
         return f"⚠️ LLM 發生錯誤：{e}"

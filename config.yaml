@@ -55,7 +55,7 @@ state_file: "state.json"
 # --- LLM 判讀 prompt ---
 # {title} 和 {abstract} 會被自動替換
 llm:
-  model: "gemini-2.0-flash"   # 免費方案，每天 1500 次請求
+  model: "claude-haiku-4-5-20251001"   # 最省錢，判讀品質夠用
   max_tokens: 400
   prompt: |
     你是一位最佳化領域（optimization theory）的研究助理。
