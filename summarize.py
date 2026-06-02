@@ -15,6 +15,7 @@ import anthropic
 logger = logging.getLogger(__name__)
 
 _MIN_ABSTRACT_LEN = 50
+_MAX_ABSTRACT_LEN = 1500   # 摘要超過此長度即截斷，降低輸入 token 費用
 
 
 def summarize_paper(paper: Dict, config: Dict) -> str:
@@ -33,6 +34,10 @@ def summarize_paper(paper: Dict, config: Dict) -> str:
 
     if len(abstract) < _MIN_ABSTRACT_LEN:
         return "（摘要過短或不可用，無法判讀。請至原文確認。）"
+
+    # 截斷過長摘要，降低輸入 token 費用（判讀只需前段即可）
+    if len(abstract) > _MAX_ABSTRACT_LEN:
+        abstract = abstract[:_MAX_ABSTRACT_LEN].rstrip() + " …(摘要過長已截斷)"
 
     prompt_template = config.get("prompt", "請判讀以下論文：\n標題：{title}\n摘要：{abstract}")
     prompt = prompt_template.format(title=title, abstract=abstract)

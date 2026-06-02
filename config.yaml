@@ -12,42 +12,70 @@ arxiv:
   max_results: 50      # 每次最多抓幾篇（建議 30~100）
 
 # --- 正式期刊設定 ---
-# 請使用者自行確認 ISSN 並補上想追蹤的期刊
+# tier 決定處理頻率：
+#   daily  = 每天抓取、判讀後挑前 N 篇推送
+#   weekly = 只在每週指定那天（見 selection.weekly_run_weekday）抓取處理
 journals:
   crossref:            # 用 Crossref API 查新 DOI（主力）
-    - name: "Mathematical Programming"
-      issn: "0025-5610"
-    - name: "SIAM Journal on Optimization"
-      issn: "1052-6234"
-    - name: "Operations Research"
-      issn: "0030-364X"
-    - name: "Mathematical Programming Computation"
-      issn: "1867-2949"
-    - name: "Computers and Operations Research"
-      issn: "0305-0548"
-    - name: "Journal of Optimization Theory and Applications"
-      issn: "0022-3239"
+    # ---- 每日期刊（你最常看的）----
     - name: "European Journal of Operational Research"
       issn: "0377-2217"
+      tier: daily
+    - name: "Mathematical Programming"
+      issn: "0025-5610"
+      tier: daily
+    - name: "Mathematical Programming Computation"
+      issn: "1867-2949"
+      tier: daily
+    # ---- 每週期刊（每週彙整一次）----
+    - name: "SIAM Journal on Optimization"
+      issn: "1052-6234"
+      tier: weekly
+    - name: "Operations Research"
+      issn: "0030-364X"
+      tier: weekly
+    - name: "Computers and Operations Research"
+      issn: "0305-0548"
+      tier: weekly
+    - name: "Journal of Optimization Theory and Applications"
+      issn: "0022-3239"
+      tier: weekly
 
   rss:                 # 期刊官方 RSS（補充，即時性更好）
-    - name: "Mathematical Programming"
-      url: "https://link.springer.com/search.rss?facet-content-type=Article&facet-journal-id=10107"
-    - name: "SIAM Journal on Optimization"
-      url: "https://epubs.siam.org/action/showFeed?type=etoc&feed=rss&jc=sjope8"
-    - name: "Operations Research"
-      url: "https://pubsonline.informs.org/action/showFeed?type=etoc&feed=rss&jc=opre"
-    - name: "Mathematical Programming Computation"
-      url: "https://link.springer.com/search.rss?facet-content-type=Article&facet-journal-id=12532"
-    - name: "Computers and Operations Research"
-      url: "https://rss.sciencedirect.com/publication/science/03050548"
-    - name: "Journal of Optimization Theory and Applications"
-      url: "https://link.springer.com/search.rss?facet-content-type=Article&facet-journal-id=10957"
+    # ---- 每日期刊 ----
     - name: "European Journal of Operational Research"
       url: "https://rss.sciencedirect.com/publication/science/03772217"
+      tier: daily
+    - name: "Mathematical Programming"
+      url: "https://link.springer.com/search.rss?facet-content-type=Article&facet-journal-id=10107"
+      tier: daily
+    - name: "Mathematical Programming Computation"
+      url: "https://link.springer.com/search.rss?facet-content-type=Article&facet-journal-id=12532"
+      tier: daily
+    # ---- 每週期刊 ----
+    - name: "SIAM Journal on Optimization"
+      url: "https://epubs.siam.org/action/showFeed?type=etoc&feed=rss&jc=sjope8"
+      tier: weekly
+    - name: "Operations Research"
+      url: "https://pubsonline.informs.org/action/showFeed?type=etoc&feed=rss&jc=opre"
+      tier: weekly
+    - name: "Computers and Operations Research"
+      url: "https://rss.sciencedirect.com/publication/science/03050548"
+      tier: weekly
+    - name: "Journal of Optimization Theory and Applications"
+      url: "https://link.springer.com/search.rss?facet-content-type=Article&facet-journal-id=10957"
+      tier: weekly
 
 # Crossref 查詢往前看幾天（避免遺漏）
-crossref_lookback_days: 3
+crossref_lookback_days: 3          # 每日期刊
+crossref_weekly_lookback_days: 7   # 每週期刊（往前看 7 天，涵蓋整週）
+
+# --- 分層選取設定 ---
+selection:
+  weekly_run_weekday: 0    # 每週哪天處理每週期刊：0=週一 ... 6=週日（Python weekday）
+  arxiv_daily_limit: 10    # arXiv 每天判讀後最多推送幾篇
+  daily_journal_limit: 10  # 每日期刊每天最多推送幾篇
+  weekly_journal_limit: 10 # 每週期刊每週最多推送幾篇
 
 # --- 去重 state 檔路徑 ---
 state_file: "state.json"
@@ -56,7 +84,7 @@ state_file: "state.json"
 # {title} 和 {abstract} 會被自動替換
 llm:
   model: "claude-haiku-4-5-20251001"   # 最省錢，判讀品質夠用
-  max_tokens: 400
+  max_tokens: 250      # 輸出格式固定且短，250 足夠（原 400，降低輸出 token 費用）
   prompt: |
     你是一位最佳化領域（optimization theory）的研究助理。
     請根據以下論文資訊，用繁體中文給出快速判讀，嚴格照格式輸出：
@@ -78,8 +106,8 @@ telegram:
   high_priority_emoji: "🔥"
   medium_priority_emoji: "📄"
   low_priority_emoji: "💤"
-  # 每次推送最多幾篇（避免洗版）
-  max_messages_per_run: 50
+  # 每次推送最多幾篇（避免洗版）。分層選取後最多 30 篇，設 35 留緩衝。
+  max_messages_per_run: 35
 
 # --- 排程（僅供參考，實際排程在 GitHub Actions workflow 設定）---
 # cron: "0 8 * * *"   # 每天 22:00 UTC（台灣時間 08:00）
