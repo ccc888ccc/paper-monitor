@@ -14,7 +14,7 @@ import yaml
 from sources import fetch_arxiv, fetch_crossref, fetch_rss
 from state import load_seen_ids, save_seen_ids, filter_new, mark_seen
 from summarize import summarize_papers
-from notify import notify_papers
+from notify import notify_papers, notify_heartbeat
 
 # ----------------------------------------------------------------
 # 設定 logging
@@ -109,7 +109,8 @@ def main():
     logger.info(f"去重後：{len(new_papers)} 篇新論文")
 
     if not new_papers:
-        logger.info("沒有新論文，結束。")
+        logger.info("沒有新論文，發送 heartbeat 後結束。")
+        notify_heartbeat(config)
         return
 
     # 5. LLM 判讀（全部判讀，之後再分桶挑選）

@@ -70,6 +70,25 @@ def send_message(token: str, chat_id: str, text: str) -> bool:
         return False
 
 
+def notify_heartbeat(config: Dict, note: str = "") -> bool:
+    """
+    沒有新論文時，仍推一則簡短回報，讓使用者每天都能確認排程正常運作。
+    回傳是否成功。
+    """
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        logger.warning("未設定 TELEGRAM_BOT_TOKEN 或 TELEGRAM_CHAT_ID，跳過 heartbeat。")
+        return False
+
+    from datetime import datetime, timezone, timedelta
+    today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+    msg = f"✅ {today} 已檢查，今日無新論文。"
+    if note:
+        msg += f"\n{note}"
+    return send_message(token, chat_id, msg)
+
+
 def notify_papers(papers: List[Dict], config: Dict) -> int:
     """
     推送所有論文到 Telegram。
