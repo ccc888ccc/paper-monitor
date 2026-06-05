@@ -2,10 +2,13 @@ name: Paper Monitor
 
 on:
   schedule:
-    # 每天 UTC 00:17（台灣時間 08:17）執行
-    # 刻意避開整點：整點是 GitHub Actions 最壅塞、最容易被延遲/略過的時段
-    # 如要改時間，修改 cron 表達式：https://crontab.guru/
-    - cron: "17 0 * * *"
+    # 每天 UTC 23:10（台灣時間隔日 07:10）排程
+    # GitHub Actions 的排程是 best-effort，壅塞時段會被延遲數十分鐘到數小時。
+    # UTC 00:00 前後是全球最壅塞的時段（大量每日任務都排在午夜 UTC），
+    # 因此刻意把時間提早並挪離午夜壅塞區，讓加上延遲後落在台灣早上 8 點左右。
+    # 也刻意避開整點（用 :10），整點同樣較容易塞車。
+    # 如要改時間，修改 cron 表達式（UTC 時間）：https://crontab.guru/
+    - cron: "10 23 * * *"
   workflow_dispatch:
     # 允許手動在 GitHub Actions 頁面觸發（方便測試）
 
@@ -48,10 +51,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update state.json [skip ci]"
-          # push 前先 rebase；若遠端又被更新就重試，最多 5 次
-          for i in 1 2 3 4 5; do
-            git pull --rebase origin master && git push origin HEAD:master && break
-            echo "push 第 $i 次失敗，重試中..."
-            sleep 3
-          done
+          git commit -m "chore: update sta
