@@ -51,4 +51,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
           git diff --staged --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update sta
+          git commit -m "chore: update state.json [skip ci]"
+          # push 前先 rebase；若遠端又被更新就重試，最多 5 次
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin master && git push origin HEAD:master && break
+            echo "push 第 $i 次失敗，重試中..."
+            sleep 3
+          done
