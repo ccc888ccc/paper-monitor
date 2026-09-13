@@ -1,14 +1,15 @@
 name: Paper Monitor
 
 on:
-  schedule:
-    # 每天 UTC 23:10（台灣時間隔日 07:10）排程
-    # GitHub Actions 的排程是 best-effort，壅塞時段會被延遲數十分鐘到數小時。
-    # UTC 00:00 前後是全球最壅塞的時段（大量每日任務都排在午夜 UTC），
-    # 因此刻意把時間提早並挪離午夜壅塞區，讓加上延遲後落在台灣早上 8 點左右。
-    # 也刻意避開整點（用 :10），整點同樣較容易塞車。
-    # 如要改時間，修改 cron 表達式（UTC 時間）：https://crontab.guru/
-    - cron: "10 23 * * *"
+  # ★2026-09-13 停用自動排程（G：最近很少看 Telegram、省 Claude API）。手動 Run workflow 仍可用；要恢復就把下面 schedule 區塊取消註解。
+  # schedule:
+  #   # 每天 UTC 23:10（台灣時間隔日 07:10）排程
+  #   # GitHub Actions 的排程是 best-effort，壅塞時段會被延遲數十分鐘到數小時。
+  #   # UTC 00:00 前後是全球最壅塞的時段（大量每日任務都排在午夜 UTC），
+  #   # 因此刻意把時間提早並挪離午夜壅塞區，讓加上延遲後落在台灣早上 8 點左右。
+  #   # 也刻意避開整點（用 :10），整點同樣較容易塞車。
+  #   # 如要改時間，修改 cron 表達式（UTC 時間）：https://crontab.guru/
+  #   - cron: "10 23 * * *"
   workflow_dispatch:
     # 允許手動在 GitHub Actions 頁面觸發（方便測試）
 
